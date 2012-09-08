@@ -130,7 +130,7 @@ static struct tegra_sdhci_platform_data tegra_sdhci_platform_data0 = {
 #ifdef CONFIG_MMC_EMBEDDED_SDIO
 		.embedded_sdio = &embedded_sdio_data0,
 #endif
-		.built_in = 0,
+		.built_in = 1,
 		.ocr_mask = MMC_OCR_1V8_MASK,
 	},
 #ifndef CONFIG_MMC_EMBEDDED_SDIO
@@ -277,8 +277,8 @@ static int __init smba1002_wifi_init(void)
 	gpio_request(SMBA1002_WLAN_POWER, "wlan_power");
 	gpio_request(SMBA1002_WLAN_RESET, "wlan_rst");
 
-//	tegra_gpio_enable(SMBA1002_WLAN_POWER);
-//	tegra_gpio_enable(SMBA1002_WLAN_RESET);
+	tegra_gpio_enable(SMBA1002_WLAN_POWER);
+	tegra_gpio_enable(SMBA1002_WLAN_RESET);
 
 	gpio_direction_output(SMBA1002_WLAN_POWER, 0);
 	gpio_direction_output(SMBA1002_WLAN_RESET, 0);
@@ -292,10 +292,10 @@ static int __init smba1002_wifi_init(void)
 }
 int __init smba1002_sdhci_init(void)
 {
-//	tegra_gpio_enable(tegra_sdhci_platform_data2.power_gpio);
-//	tegra_gpio_enable(tegra_sdhci_platform_data2.cd_gpio);
+	tegra_gpio_enable(tegra_sdhci_platform_data2.power_gpio);
+	tegra_gpio_enable(tegra_sdhci_platform_data2.cd_gpio);
 
-//	tegra_gpio_enable(tegra_sdhci_platform_data3.power_gpio);
+	tegra_gpio_enable(tegra_sdhci_platform_data3.power_gpio);
 
 	platform_device_register(&tegra_sdhci_device0);
 	platform_device_register(&tegra_sdhci_device3);
