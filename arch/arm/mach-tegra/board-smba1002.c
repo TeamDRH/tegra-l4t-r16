@@ -62,27 +62,26 @@
 #include "wakeups-t2.h"
 #include "wdt-recovery.h"
 
-static struct rfkill_gpio_platform_data smba_bt_rfkill_pdata[] = {
-	{
-		.name           = "bt_rfkill",
-		.shutdown_gpio  = SMBA1002_BT_RESET,
-		.reset_gpio     = TEGRA_GPIO_INVALID,
+static struct rfkill_gpio_platform_data smba1002_bt_rfkill_pdata = {
+		.name           = "bluetooth_rfkill",
+		.reset_gpio     = SMBA1002_BT_RESET,
+		.shutdown_gpio  = -1,
+		.power_clk_name = "bcm4329_32k_clk",
 		.type           = RFKILL_TYPE_BLUETOOTH,
-	},
 };
 
-static struct platform_device smba_bt_rfkill_device = {
+static struct platform_device smba1002_bt_rfkill_device = {
 	.name = "rfkill_gpio",
 	.id   = -1,
 	.dev  = {
-	        .platform_data = smba_bt_rfkill_pdata,
+	        .platform_data = &smba1002_bt_rfkill_pdata,
 	 },
 };
 
 void __init smba_bt_rfkill(void)
 {
 	/*Add Clock Resource*/
-	clk_add_alias("bcm4329_32k_clk", smba_bt_rfkill_device.name, \
+	clk_add_alias("bcm4329_32k_clk", smba1002_bt_rfkill_device.name, \
     				"blink", NULL);
 	
 	return;
@@ -95,14 +94,7 @@ static struct resource smba_bluesleep_resources[] = {
 			.end    = SMBA1002_BT_IRQ,
 			.flags  = IORESOURCE_IO,
 	},
-	//FIX THIS SECTION
 	[1] = {
-		.name = "gpio_ext_wake",
-			.start  = TEGRA_GPIO_PU1,
-			.end    = TEGRA_GPIO_PU1,
-			.flags  = IORESOURCE_IO,
-	},
-	[2] = {
 		.name = "host_wake",
 			.start  = TEGRA_GPIO_TO_IRQ(SMBA1002_BT_IRQ),
 			.end    = TEGRA_GPIO_TO_IRQ(SMBA1002_BT_IRQ),
@@ -152,56 +144,6 @@ static __initdata struct tegra_clk_init_table smba_clk_init_table[] = {
 
 
 
-
-static struct clk *wifi_32k_clk;
-int smba_bt_wifi_gpio_init(void)
-{
-	static bool inited = 0;
-	// Check to see if we've already been init'ed.
-	if (inited) 
-		return 0;
-	wifi_32k_clk = clk_get_sys(NULL, "blink");
-        if (IS_ERR(wifi_32k_clk)) {
-                pr_err("%s: unable to get blink clock\n", __func__);
-                return -1;
-        }
-	gpio_request(SMBA1002_WLAN_POWER, "bt_wifi_power");
-        tegra_gpio_enable(SMBA1002_WLAN_POWER);
-	gpio_direction_output(SMBA1002_WLAN_POWER, 0);
-	inited = 1;
-	return 0;	
-}
-EXPORT_SYMBOL_GPL(smba_bt_wifi_gpio_init);
-
-int smba_bt_wifi_gpio_set(bool on)
-{
-       static int count = 0;
-	if (IS_ERR(wifi_32k_clk)) {
-		pr_err("%s: Clock wasn't obtained\n", __func__);
-		return -1;
-	}
-				
-	if (on) {
-		if (count == 0) {
-			gpio_set_value(SMBA1002_WLAN_POWER, 1);
-        		mdelay(100);
-			clk_enable(wifi_32k_clk);
-		}
-		count++;
-	} else {
-		if (count == 0) {
-			pr_err("%s: Unbalanced wifi/bt power disable requests\n", __func__);
-			return -1;
-		} else if (count == 1) {
-			        gpio_set_value(SMBA1002_WLAN_POWER, 0);
-        			mdelay(100);
-				clk_disable(wifi_32k_clk);
-		} 
-		--count;
-	}
-	return 0;		
-}
-EXPORT_SYMBOL_GPL(smba_bt_wifi_gpio_set);
 
 
 
@@ -286,7 +228,8 @@ EXPORT_SYMBOL_GPL(smba_gps_mag_deinit);
 
 static struct platform_device *smba_devices[] __initdata = {
         &tegra_pmu_device,
-        &smba_bt_rfkill_device,
+        &smba1002_bt_rfkill_device,
+        &smba_bluesleep_device,
 };
 
 static void __init tegra_smba_init(void)
@@ -360,7 +303,7 @@ static void __init tegra_smba_init(void)
 	
 	/* Register Bluetooth powermanagement devices */
 	smba_bt_rfkill();
-	smba_setup_bluesleep;
+	smba_setup_bluesleep();
 
 	/* Register Camera powermanagement devices */
 	smba_camera_register_devices();
