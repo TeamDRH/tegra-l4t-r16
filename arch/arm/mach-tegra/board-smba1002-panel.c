@@ -59,8 +59,6 @@ static int smba_backlight_init(struct device *dev) {
 	ret = gpio_direction_output(SMBA1002_BL_ENB, 1);
 	if (ret < 0)
 		gpio_free(SMBA1002_BL_ENB);
-	else
-		tegra_gpio_enable(SMBA1002_BL_ENB);
 
 	return ret;
 };
@@ -68,7 +66,6 @@ static int smba_backlight_init(struct device *dev) {
 static void smba_backlight_exit(struct device *dev) {
 	gpio_set_value(SMBA1002_BL_ENB, 0);
 	gpio_free(SMBA1002_BL_ENB);
-	tegra_gpio_disable(SMBA1002_BL_ENB);
 }
 
 static int smba_backlight_notify(struct device *unused, int brightness)
@@ -383,21 +380,13 @@ int __init smba_panel_init(void)
 
 	gpio_request(SMBA1002_EN_VDD_PANEL, "pnl_pwr_enb");
 	gpio_direction_output(SMBA1002_EN_VDD_PANEL, 1);
-	tegra_gpio_enable(SMBA1002_EN_VDD_PANEL);
 
 	gpio_request(SMBA1002_BL_VDD, "bl_vdd");
 	gpio_direction_output(SMBA1002_BL_VDD, 1);
-	tegra_gpio_enable(SMBA1002_BL_VDD);
 
 	gpio_request(SMBA1002_LVDS_SHUTDOWN, "lvds_shdn");
 	gpio_direction_output(SMBA1002_LVDS_SHUTDOWN, 1);
-	tegra_gpio_enable(SMBA1002_LVDS_SHUTDOWN);
 
-//	tegra_gpio_enable(SMBA1002_HDMI_ENB);
-//	gpio_request(SMBA1002_HDMI_ENB, "hdmi_5v_en");
-//	gpio_direction_output(SMBA1002_HDMI_ENB, 1);
-
-	tegra_gpio_enable(SMBA1002_HDMI_HPD);
 	gpio_request(SMBA1002_HDMI_HPD, "hdmi_hpd");
 	gpio_direction_input(SMBA1002_HDMI_HPD);
 
@@ -448,5 +437,4 @@ int __init smba_panel_init(void)
 
 	return err;
 }
-
 
