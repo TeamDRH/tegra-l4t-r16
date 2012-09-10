@@ -53,6 +53,9 @@
 #include <mach/system.h>
 #include <linux/nvmap.h>
 
+#include <linux/i2c.h>
+#include <linux/i2c/at168_ts.h>
+
 #include "board.h"
 #include "board-smba1002.h"
 #include "clock.h"
@@ -77,6 +80,7 @@ static struct platform_device smba1002_bt_rfkill_device = {
 	        .platform_data = &smba1002_bt_rfkill_pdata,
 	 },
 };
+#include <linux/i2c/at168_ts.h>
 
 void __init smba_bt_rfkill(void)
 {
@@ -196,7 +200,30 @@ int __init smba_i2c_register_devices(void)
 }
 
 
+struct at168_i2c_ts_platform_data at168_pdata = {
+	.gpio_reset = SMBA1002_TS_RESET,
+	.gpio_power = SMBA1002_TS_POWER,
+};
 
+static struct i2c_board_info __initdata smba_i2c_bus0_touch_info_at168[] = {
+	{
+		I2C_BOARD_INFO("at168_touch", 0x5c),
+		.irq = TEGRA_GPIO_TO_IRQ(SMBA1002_TS_IRQ),
+		.platform_data = &at168_pdata,
+	},
+};
+
+
+int __init smba_touch_register_devices(void)
+{
+	tegra_gpio_enable(SMBA1002_TS_IRQ);
+	gpio_request(SMBA1002_TS_IRQ, "at168_touch");
+	gpio_direction_input(SMBA1002_TS_IRQ);
+	
+	i2c_register_board_info(0, smba_i2c_bus0_touch_info_at168, 1);
+
+	return 0;
+}
 
 
 
@@ -280,9 +307,15 @@ EXPORT_SYMBOL_GPL(smba_gps_mag_deinit);
 #endif
 
 static struct platform_device *smba_devices[] __initdata = {
-        &tegra_pmu_device,
-        &smba1002_bt_rfkill_device,
-        &smba_bluesleep_device,
+    &tegra_pmu_device,
+    &smba1002_bt_rfkill_device,
+    &smba_bluesleep_device,
+    &tegra_spi_device1,
+	&tegra_spi_device2,
+	&tegra_spi_device3,
+	//&tegra_spi_device4,
+	&tegra_aes_device,
+	&tegra_wdt_device,
 };
 
 static void __init tegra_smba_init(void)
@@ -327,9 +360,6 @@ static void __init tegra_smba_init(void)
 	/* Register UART devices */
 	smba_uart_register_devices();
 
-	/* Register SPI devices */
-	smba_spi_register_devices();
-
 	/* Register GPU devices */
 	smba_panel_init();
 
@@ -338,12 +368,6 @@ static void __init tegra_smba_init(void)
 
 	/* Register Jack devices */
 	//smba_jack_register_devices();
-
-	/* Register AES encryption devices */
-	smba_aes_register_devices();
-
-	/* Register Watchdog devices */
-	smba_wdt_register_devices();
 
 	/* Register all the keyboard devices */
 	smba_keys_init();
