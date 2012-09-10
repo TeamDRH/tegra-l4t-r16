@@ -80,7 +80,6 @@ static struct platform_device smba1002_bt_rfkill_device = {
 	        .platform_data = &smba1002_bt_rfkill_pdata,
 	 },
 };
-#include <linux/i2c/at168_ts.h>
 
 void __init smba_bt_rfkill(void)
 {
