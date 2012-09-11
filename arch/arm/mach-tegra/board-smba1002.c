@@ -63,6 +63,10 @@
 #include <mach/tegra_alc5623_pdata.h>
 #include <linux/i2c/at168_ts.h>
 
+#include <linux/usb/composite.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/f_accessory.h>
+
 #include "board.h"
 #include "board-smba1002.h"
 #include "clock.h"
@@ -463,6 +467,99 @@ static struct platform_device *smba_devices[] __initdata = {
 	&tegra_aes_device,
 	&tegra_wdt_device,
 };
+
+static struct tegra_usb_platform_data tegra_udc_pdata = {
+        .port_otg = true,
+        .has_hostpc = false,
+        .phy_intf = TEGRA_USB_PHY_INTF_UTMI,
+        .op_mode = TEGRA_USB_OPMODE_DEVICE,
+        .u_data.dev = {
+                .vbus_pmu_irq = 0,
+                .vbus_gpio = -1,
+                .charging_supported = false,
+                .remote_wakeup_supported = false,
+        },
+        .u_cfg.utmi = {
+                .hssync_start_delay = 0,
+                .elastic_limit = 16,
+                .idle_wait_delay = 17,
+                .term_range_adj = 6,
+                .xcvr_setup = 9,
+                .xcvr_lsfslew = 2,
+                .xcvr_lsrslew = 2,
+                .xcvr_setup_offset = 0,
+                .xcvr_use_fuses = 1,
+        },
+};
+
+static struct tegra_usb_platform_data tegra_ehci1_utmi_pdata = {
+        .port_otg = true,
+        .has_hostpc = false,
+        .phy_intf = TEGRA_USB_PHY_INTF_UTMI,
+        .op_mode = TEGRA_USB_OPMODE_HOST,
+        .u_data.host = {
+                .vbus_gpio = SMBA1002_USB0_VBUS,
+                .vbus_reg = NULL,
+                .hot_plug = true,
+                .remote_wakeup_supported = false,
+                .power_off_on_suspend = false,
+        },
+        .u_cfg.utmi = {
+                .hssync_start_delay = 9,
+                .elastic_limit = 16,
+                .idle_wait_delay = 17,
+                .term_range_adj = 6,
+                .xcvr_setup = 9,
+                .xcvr_lsfslew = 2,
+                .xcvr_lsrslew = 2,
+        },
+};
+
+static struct tegra_usb_platform_data tegra_ehci3_utmi_pdata = {
+        .port_otg = false,
+        .has_hostpc = false,
+        .phy_intf = TEGRA_USB_PHY_INTF_UTMI,
+        .op_mode        = TEGRA_USB_OPMODE_HOST,
+        .u_data.host = {
+                .vbus_gpio = -1,
+                .vbus_reg = NULL,
+                .hot_plug = true,
+                .remote_wakeup_supported = false,
+                .power_off_on_suspend = true,
+        },
+        .u_cfg.utmi = {
+                .hssync_start_delay = 9,
+                .elastic_limit = 16,
+                .idle_wait_delay = 17,
+                .term_range_adj = 6,
+                .xcvr_setup = 9,
+                .xcvr_lsfslew = 2,
+                .xcvr_lsrslew = 2,
+        },
+};
+
+static struct tegra_usb_otg_data tegra_otg_pdata = {
+	.ehci_device = &tegra_ehci1_device,
+	.ehci_pdata = &tegra_ehci1_utmi_pdata,
+}; 
+
+static void smba_usb_init(void)
+	{
+	tegra_otg_device.dev.platform_data = &tegra_otg_pdata;
+	platform_device_register(&tegra_otg_device);
+
+	tegra_udc_device.dev.platform_data = &tegra_udc_pdata;
+	platform_device_register(&tegra_udc_device);
+
+	tegra_ehci3_device.dev.platform_data = &tegra_ehci3_utmi_pdata;
+	platform_device_register(&tegra_ehci3_device);
+};
+
+int __init smba_usb_register_devices(void)
+{
+	smba_usb_init();
+	return 0;
+}
 
 static void __init tegra_smba_init(void)
 {

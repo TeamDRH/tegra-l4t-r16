@@ -218,7 +218,6 @@ obj-${CONFIG_MACH_SMBA1002}              += board-smba1002-pinmux.o
 obj-${CONFIG_MACH_SMBA1002}              += board-smba1002-power.o
 obj-${CONFIG_MACH_SMBA1002}              += board-smba1002-sensors.o
 obj-${CONFIG_MACH_SMBA1002}              += board-smba1002-uart.o
-obj-${CONFIG_MACH_SMBA1002}              += board-smba1002-usb.o
 obj-${CONFIG_MACH_SMBA1002}              += board-smba1002-wake.o
 obj-${CONFIG_MACH_SMBA1002}              += board-smba1002.o
 obj-${CONFIG_MACH_SMBA1002}              += board-smba1002-sdhci.o
